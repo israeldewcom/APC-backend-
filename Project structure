@@ -1,0 +1,129 @@
+apc_backend/
+├── apc_project/
+│   ├── __init__.py
+│   ├── settings.py          # Fully configured + new apps + advanced settings
+│   ├── urls.py               # Master router + all endpoints + admin
+│   ├── asgi.py                # ASGI + WebSocket routing + new consumers
+│   ├── wsgi.py                # WSGI entry point
+│   └── celery.py              # Celery app + beat schedule
+├── apps/
+│   ├── authentication/        # ORIGINAL – unchanged
+│   ├── users/                 # UPDATED – added public_key, face_encoding, sync_token
+│   ├── nin_verification/      # ORIGINAL – unchanged
+│   ├── posts/                 # ORIGINAL – unchanged
+│   ├── messaging/             # ORIGINAL – unchanged
+│   ├── groups/                # ORIGINAL – unchanged
+│   ├── meetings/              # ORIGINAL – unchanged
+│   ├── notifications/         # ORIGINAL – unchanged
+│   ├── media/                 # ORIGINAL – unchanged
+│   ├── analytics/             # ORIGINAL – unchanged
+│   ├── security/              # ORIGINAL – unchanged
+│   ├── stories/               # ORIGINAL – unchanged
+│   ├── live_streaming/        # ORIGINAL – unchanged
+│   ├── hashtags/              # ORIGINAL – unchanged
+│   ├── reels/                 # ORIGINAL – unchanged
+│   ├── events/                # ORIGINAL – unchanged
+│   ├── marketplace/           # ORIGINAL – unchanged
+│   ├── voice_notes/           # ORIGINAL – unchanged
+│   ├── broadcast/             # ORIGINAL – unchanged
+│   ├── close_friends/         # ORIGINAL – unchanged
+│   ├── data_export/           # ORIGINAL – unchanged
+│   ├── search/                # ORIGINAL – unchanged
+│   ├── location/              # ORIGINAL – unchanged
+│   ├── payments/              # ORIGINAL – unchanged
+│   ├── moderation/            # ORIGINAL – unchanged
+│   ├── i18n/                  # ORIGINAL – unchanged
+│   ├── creator_analytics/     # ORIGINAL – unchanged
+│   ├── scheduled_posts/       # ORIGINAL – unchanged
+│   ├── multi_tenant/          # NEW – organization management
+│   ├── rbac/                  # NEW – role‑based access control
+│   ├── encryption/            # NEW – E2EE key management
+│   ├── biometrics/            # NEW – face & device fingerprint
+│   ├── recommendations/       # NEW – trending & feed personalisation
+│   ├── ai/                    # NEW – AI moderation & smart replies
+│   └── sync/                  # NEW – offline sync & queue
+├── core/
+│   ├── __init__.py
+│   ├── middleware/
+│   │   ├── __init__.py
+│   │   ├── security.py        (original, unchanged)
+│   │   ├── audit.py           (original, unchanged)
+│   │   ├── rate_limit.py      (original, unchanged)
+│   │   ├── device.py          (original, unchanged)
+│   │   ├── i18n.py            (original, unchanged)
+│   │   └── multi_tenant.py    (NEW)
+│   ├── permissions/
+│   │   ├── __init__.py
+│   │   └── custom_permissions.py  (original + new permissions)
+│   └── utils/
+│       ├── __init__.py
+│       ├── encryption.py      (original, unchanged)
+│       ├── otp.py             (original, unchanged)
+│       ├── email.py           (original, unchanged)
+│       ├── sms.py             (original, unchanged)
+│       ├── audit.py           (original, unchanged)
+│       ├── pagination.py      (original, unchanged)
+│       ├── throttle.py        (original, unchanged)
+│       ├── exceptions.py      (original, unchanged)
+│       ├── logging.py         (original, unchanged)
+│       ├── db_router.py       (original, unchanged)
+│       ├── location.py        (original, unchanged)
+│       ├── payments.py        (original, unchanged)
+│       ├── moderation.py      (original, unchanged)
+│       ├── i18n.py            (original, unchanged)
+│       └── e2ee.py            (NEW)
+├── infrastructure/
+│   ├── __init__.py
+│   ├── celery_tasks/
+│   │   ├── __init__.py
+│   │   ├── notifications.py   (original, unchanged)
+│   │   ├── media.py           (original, unchanged)
+│   │   ├── meetings.py        (original, unchanged)
+│   │   ├── analytics.py       (original, unchanged)
+│   │   ├── security.py        (original, unchanged)
+│   │   ├── audit.py           (original, unchanged)
+│   │   ├── stories.py         (original, unchanged)
+│   │   ├── live_streaming.py  (original, unchanged)
+│   │   ├── moderation.py      (original, unchanged)
+│   │   ├── data_export.py     (original, unchanged)
+│   │   ├── scheduled_posts.py (original, unchanged)
+│   │   ├── recommendations.py (NEW)
+│   │   ├── ai_moderation.py   (NEW)
+│   │   └── sync.py            (NEW)
+│   └── websockets/
+│       ├── __init__.py
+│       ├── notification_consumer.py   (original, unchanged)
+│       ├── presence_consumer.py       (original, unchanged)
+│       ├── live_streaming_consumer.py (original, unchanged)
+│       ├── location_consumer.py       (original, unchanged)
+│       └── sync_consumer.py           (NEW)
+├── config/
+│   ├── docker/
+│   │   └── docker-compose.yml   (updated with Elasticsearch)
+│   ├── nginx/
+│   │   └── nginx.conf           (unchanged)
+│   ├── kubernetes/
+│   │   └── (manifests)          (unchanged)
+│   └── prometheus/
+│       └── prometheus.yml       (unchanged)
+├── scripts/
+│   ├── deployment/
+│   │   └── deploy.sh            (unchanged)
+│   ├── automation/
+│   │   ├── create_superadmin.py (unchanged)
+│   │   ├── seed_hashtags.py     (unchanged)
+│   │   ├── expire_stories.py    (unchanged)
+│   │   ├── sync_cleanup.py      (NEW)
+│   │   ├── ai_moderate_old.py   (NEW)
+│   │   └── update_trending.py   (NEW)
+│   └── monitoring/
+│       └── health_check.py      (unchanged)
+├── tests/
+│   ├── __init__.py
+│   └── ... (test files not expanded, but all apps have corresponding tests)
+├── docs/
+│   └── ... (API documentation, unchanged)
+├── requirements.txt              (fully updated)
+├── Dockerfile                    (unchanged)
+├── .env.example                  (updated)
+└── manage.py                     (unchanged)
