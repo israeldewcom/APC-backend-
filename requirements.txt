@@ -84,9 +84,9 @@ scikit-learn==1.5.0
 transformers==4.41.2
 torch==2.3.0
 
-# Biometrics
-face-recognition==1.3.0
-django-cryptography==1.1
+# Biometrics – temporarily disabled due to heavy compilation requirements
+# face-recognition==1.3.0
+# django-cryptography==1.1
 
 # Offline sync
 django-channels-presence==1.0.0
@@ -98,8 +98,8 @@ opentelemetry-sdk==1.25.0
 opentelemetry-instrumentation-django==0.46b0
 opentelemetry-exporter-otlp==1.25.0
 
-# WebRTC TURN/STUN (just utils)
-aiortc==1.7.0
+# WebRTC TURN/STUN – temporarily disabled due to heavy compilation requirements
+# aiortc==1.7.0
 
 # Compression
 blosc2==2.4.0
