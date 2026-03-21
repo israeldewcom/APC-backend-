@@ -70,7 +70,7 @@ django-rosetta==0.10.0
 django-parler==2.3
 
 # NEW PACKAGES FOR UPGRADE
-# Multi-tenant (optional – you may keep or remove if using custom multi_tenant app)
+# Multi-tenant (optional)
 django-tenants==3.10.1
 
 # Search
@@ -91,7 +91,7 @@ django-cryptography==1.1
 
 # Offline sync
 django-channels-presence==1.0.0
-django-db-queue==0.8.0
+django-db-queue==3.3.0
 
 # Monitoring & observability
 opentelemetry-api==1.25.0
