@@ -90,7 +90,7 @@ RUN mkdir -p /app/infrastructure/websockets && \
         echo "# stub for $f" > /app/infrastructure/websockets/${f}.py; \
     done
 
-# --- DYNAMIC SETTINGS DISCOVERY ---
+# --- DYNAMIC SETTINGS DISCOVERY AND PATCHING ---
 RUN set -e; \
     SETTINGS_PATH=$(find . -name "settings.py" -not -path "*/venv/*" -not -path "*/site-packages/*" | head -n 1); \
     if [ -z "$SETTINGS_PATH" ]; then \
@@ -103,9 +103,10 @@ RUN set -e; \
     echo "🔍 Found settings at: $SETTINGS_PATH"; \
     echo "🔧 Setting DJANGO_SETTINGS_MODULE=$MODULE_NAME"; \
     echo "export DJANGO_SETTINGS_MODULE=$MODULE_NAME" >> /tmp/django_env; \
+    echo "$MODULE_NAME" > /tmp/django_settings_module.txt; \
     cat /tmp/django_env >> ~/.bashrc
 
-# --- PYTHON SCRIPT TO PATCH SETTINGS.PY (PARLER_LANGUAGES) ---
+# --- PATCH SETTINGS.PY FOR PARLER_LANGUAGES ---
 RUN source /tmp/django_env && python << 'EOF'
 import re
 import sys
@@ -121,12 +122,9 @@ if not settings_path:
     print("❌ settings.py not found")
     sys.exit(1)
 
-print(f"📄 Patching {settings_path}")
-
 with open(settings_path, 'r') as f:
     content = f.read()
 
-# Replace the PARLER_LANGUAGES block
 pattern = r'^PARLER_LANGUAGES\s*=\s*\{[^}]*\}(?:\s*$|(?=\n\n))'
 replacement = """PARLER_LANGUAGES = {
     1: (
@@ -143,7 +141,6 @@ new_content = re.sub(pattern, replacement, content, flags=re.MULTILINE | re.DOTA
 if new_content == content:
     # Fallback: line-based removal
     lines = content.split('\n')
-    in_parler = False
     new_lines = []
     i = 0
     while i < len(lines):
@@ -173,36 +170,17 @@ with open(settings_path, 'w') as f:
 print("✅ Settings file patched")
 EOF
 
-# --- PATCH ASGI.PY TO REMOVE BROKEN IMPORTS AND REPLACE WITH STUBS ---
-RUN source /tmp/django_env && python << 'EOF'
-import sys
-import os
-
-asgi_path = None
-for root, dirs, files in os.walk('.'):
-    if 'asgi.py' in files and 'venv' not in root and 'site-packages' not in root:
-        asgi_path = os.path.join(root, 'asgi.py')
-        break
-
-if not asgi_path:
-    print("❌ asgi.py not found")
-    sys.exit(0)  # Not fatal, but warn
-
-print(f"📄 Patching {asgi_path}")
-
-with open(asgi_path, 'r') as f:
-    content = f.read()
-
-# Replace the problematic imports with dummy classes and empty patterns
-# We'll create a simple asgi that doesn't rely on missing modules
-new_content = """
+# --- CREATE A PROPER ASGI.PY USING THE DISCOVERED MODULE ---
+RUN SETTINGS_MODULE=$(cat /tmp/django_settings_module.txt) && \
+    cat > /app/apc_project/asgi.py << EOF
 import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "apc_project.settings")
+# Use the discovered settings module
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "${SETTINGS_MODULE}")
 
 # Stub consumers to avoid import errors
 class DummyConsumer:
@@ -213,7 +191,6 @@ class DummyConsumer:
     async def receive(self, text_data):
         pass
 
-# Empty websocket patterns
 websocket_urlpatterns = []
 
 application = ProtocolTypeRouter({
@@ -224,16 +201,10 @@ application = ProtocolTypeRouter({
         )
     ),
 })
-"""
-
-with open(asgi_path, 'w') as f:
-    f.write(new_content)
-
-print("✅ asgi.py patched")
 EOF
 
-# Load environment variable for next steps
-RUN source /tmp/django_env && echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
+# Set the environment variable permanently
+ENV DJANGO_SETTINGS_MODULE=$(cat /tmp/django_settings_module.txt)
 
 # Collect static files
 RUN source /tmp/django_env && python manage.py collectstatic --noinput
@@ -245,7 +216,7 @@ RUN addgroup --system apc && \
 
 USER apc
 
-# Healthcheck
+# Healthcheck (adjust if your /health/ endpoint exists)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
