@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # ---- Production stage ----
 FROM dependencies AS production
 
+# Use Bash for all subsequent commands
+SHELL ["/bin/bash", "-c"]
+
 # Copy the entire project
 COPY . .
 
@@ -63,21 +66,18 @@ class ApcPasswordValidator:
 EOF
 
 # --- ENSURE ALL DJANGO APPS EXIST (create stubs for missing ones) ---
-# First, make sure the apps directory exists
 RUN mkdir -p /app/apps
 
-# Read the list of apps from settings.py (if it exists) – we'll just create a known set.
-# We'll create stubs for all apps mentioned in the original project structure.
-# If an app already has a models.py or apps.py, we don't overwrite.
+# List of all required apps (same as original structure)
 RUN for app in authentication users nin_verification posts messaging groups meetings notifications media analytics security stories live_streaming hashtags reels events marketplace voice_notes broadcast close_friends data_export search location payments moderation i18n creator_analytics scheduled_posts multi_tenant rbac encryption biometrics recommendations ai sync; do \
     app_dir="/app/apps/$app"; \
     if [ ! -d "$app_dir" ]; then \
         mkdir -p "$app_dir"; \
         echo "# Auto-generated stub for $app" > "$app_dir/__init__.py"; \
         echo "from django.apps import AppConfig" > "$app_dir/apps.py"; \
-        echo "class ${app^}Config(AppConfig):" >> "$app_dir/apps.py"; \
+        echo "class AppConfig(AppConfig):" >> "$app_dir/apps.py"; \
         echo "    name = 'apps.$app'" >> "$app_dir/apps.py"; \
-        echo "    verbose_name = '${app^}'" >> "$app_dir/apps.py"; \
+        echo "    verbose_name = '$app'" >> "$app_dir/apps.py"; \
         touch "$app_dir/models.py"; \
         touch "$app_dir/urls.py"; \
         touch "$app_dir/views.py"; \
@@ -104,7 +104,7 @@ RUN set -e; \
     echo "export DJANGO_SETTINGS_MODULE=$MODULE_NAME" >> /tmp/django_env; \
     cat /tmp/django_env >> ~/.bashrc
 
-SHELL ["/bin/bash", "-c"]
+# Load the environment variable for subsequent RUN commands
 RUN source /tmp/django_env && echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 
 # Collect static files
