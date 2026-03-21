@@ -71,7 +71,7 @@ django-parler==2.3
 
 # NEW PACKAGES FOR UPGRADE
 # Multi-tenant
-django-tenants==3.5.2   # optional, kept for schema support if needed
+django-tenants==3.10.1  # optional, kept for schema support if needed
 
 # Search
 elasticsearch-dsl==7.4.1
