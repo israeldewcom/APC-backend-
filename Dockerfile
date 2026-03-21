@@ -104,6 +104,17 @@ RUN set -e; \
     echo "export DJANGO_SETTINGS_MODULE=$MODULE_NAME" >> /tmp/django_env; \
     cat /tmp/django_env >> ~/.bashrc
 
+# --- PATCH SETTINGS.PY TO FIX PARLER_LANGUAGES ---
+RUN set -e; \
+    SETTINGS_PATH=$(find . -name "settings.py" -not -path "*/venv/*" -not -path "*/site-packages/*" | head -n 1); \
+    if [ -f "$SETTINGS_PATH" ]; then \
+        # Replace the PARLER_LANGUAGES block with a minimal English-only version
+        sed -i '/^PARLER_LANGUAGES = /c\PARLER_LANGUAGES = {\n    1: ({"code": "en"},),\n    "default": {"fallbacks": ["en"], "hide_untranslated": False}\n}' "$SETTINGS_PATH"; \
+        echo "✅ Patched $SETTINGS_PATH to fix PARLER_LANGUAGES"; \
+    else \
+        echo "❌ Settings file not found, cannot patch"; exit 1; \
+    fi
+
 # Load the environment variable for subsequent RUN commands
 RUN source /tmp/django_env && echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 
