@@ -68,7 +68,6 @@ EOF
 # --- ENSURE ALL DJANGO APPS EXIST (create stubs for missing ones) ---
 RUN mkdir -p /app/apps
 
-# List of all required apps (same as original structure)
 RUN for app in authentication users nin_verification posts messaging groups meetings notifications media analytics security stories live_streaming hashtags reels events marketplace voice_notes broadcast close_friends data_export search location payments moderation i18n creator_analytics scheduled_posts multi_tenant rbac encryption biometrics recommendations ai sync; do \
     app_dir="/app/apps/$app"; \
     if [ ! -d "$app_dir" ]; then \
@@ -86,7 +85,6 @@ RUN for app in authentication users nin_verification posts messaging groups meet
     fi; \
 done
 
-# Also create any missing top-level __init__.py in apps
 RUN test -f /app/apps/__init__.py || echo "# apps package" > /app/apps/__init__.py
 
 # --- DYNAMIC SETTINGS DISCOVERY ---
@@ -104,16 +102,76 @@ RUN set -e; \
     echo "export DJANGO_SETTINGS_MODULE=$MODULE_NAME" >> /tmp/django_env; \
     cat /tmp/django_env >> ~/.bashrc
 
-# --- PATCH SETTINGS.PY TO FIX PARLER_LANGUAGES ---
-RUN set -e; \
-    SETTINGS_PATH=$(find . -name "settings.py" -not -path "*/venv/*" -not -path "*/site-packages/*" | head -n 1); \
-    if [ -f "$SETTINGS_PATH" ]; then \
-        # Replace the PARLER_LANGUAGES block with a minimal English-only version
-        sed -i '/^PARLER_LANGUAGES = /c\PARLER_LANGUAGES = {\n    1: ({"code": "en"},),\n    "default": {"fallbacks": ["en"], "hide_untranslated": False}\n}' "$SETTINGS_PATH"; \
-        echo "✅ Patched $SETTINGS_PATH to fix PARLER_LANGUAGES"; \
-    else \
-        echo "❌ Settings file not found, cannot patch"; exit 1; \
-    fi
+# --- PYTHON SCRIPT TO PATCH SETTINGS.PY ---
+RUN source /tmp/django_env && python << 'EOF'
+import re
+import sys
+
+# Find settings.py again (or use the saved path)
+import os
+settings_path = None
+for root, dirs, files in os.walk('.'):
+    if 'settings.py' in files and 'venv' not in root and 'site-packages' not in root:
+        settings_path = os.path.join(root, 'settings.py')
+        break
+
+if not settings_path:
+    print("❌ settings.py not found")
+    sys.exit(1)
+
+print(f"📄 Patching {settings_path}")
+
+with open(settings_path, 'r') as f:
+    content = f.read()
+
+# Remove the entire PARLER_LANGUAGES block and replace it
+pattern = r'^PARLER_LANGUAGES\s*=\s*\{[^}]*\}(?:\s*$|(?=\n\n))'
+replacement = """PARLER_LANGUAGES = {
+    1: (
+        {'code': 'en'},
+    ),
+    'default': {
+        'fallbacks': ['en'],
+        'hide_untranslated': False,
+    }
+}"""
+
+new_content = re.sub(pattern, replacement, content, flags=re.MULTILINE | re.DOTALL)
+
+if new_content == content:
+    # If pattern didn't match, try a more aggressive approach: find the line that starts with PARLER_LANGUAGES
+    lines = content.split('\n')
+    in_parler = False
+    new_lines = []
+    i = 0
+    while i < len(lines):
+        if lines[i].strip().startswith('PARLER_LANGUAGES'):
+            # Skip until we find the closing brace
+            brace_count = 0
+            started = False
+            while i < len(lines):
+                line = lines[i]
+                if not started:
+                    if line.find('{') != -1:
+                        started = True
+                        brace_count = line.count('{') - line.count('}')
+                else:
+                    brace_count += line.count('{') - line.count('}')
+                i += 1
+                if started and brace_count == 0:
+                    break
+            # Now inject the replacement
+            new_lines.append(replacement)
+            continue
+        new_lines.append(lines[i])
+        i += 1
+    new_content = '\n'.join(new_lines)
+
+with open(settings_path, 'w') as f:
+    f.write(new_content)
+
+print("✅ Settings file patched successfully")
+EOF
 
 # Load the environment variable for subsequent RUN commands
 RUN source /tmp/django_env && echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
