@@ -1,4 +1,3 @@
-# ---- Base stage ----
 FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -6,16 +5,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies – added cmake, nasm, python3-dev for dlib & av
+# Install only the system packages needed for the remaining libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev gcc g++ libffi-dev libssl-dev \
     libjpeg-dev libpng-dev libwebp-dev \
     ffmpeg curl netcat-traditional \
-    pkg-config \
-    libavcodec-dev libavformat-dev libavutil-dev \
-    libavdevice-dev libavfilter-dev libswscale-dev libswresample-dev \
-    libsrtp2-dev libopus-dev libvpx-dev \
-    cmake nasm python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
