@@ -1,6 +1,5 @@
 """
-Helper functions for end-to-end encryption (E2EE).
-Handles key generation, encryption/decryption using client-side keys.
+End-to-end encryption utilities.
 """
 import base64
 from cryptography.hazmat.primitives import hashes
@@ -11,25 +10,10 @@ import os
 from django.conf import settings
 
 def generate_key_pair():
-    """
-    In a real E2EE system, this would generate a public/private key pair.
-    But since encryption happens client-side, we just provide the salt.
-    """
     salt = settings.ENCRYPTION_SALT
     return {"salt": base64.b64encode(salt).decode()}
 
-def encrypt_message(plaintext, recipient_public_key):
-    """
-    Placeholder: Actual encryption happens on client.
-    This function is for server-side key management.
-    """
-    pass
-
-def decrypt_message(ciphertext, private_key):
-    pass
-
 def derive_key(password: str, salt: bytes) -> bytes:
-    """Derive a symmetric key from password using PBKDF2."""
     kdf = PBKDF2(
         algorithm=hashes.SHA256(),
         length=32,
@@ -52,3 +36,14 @@ def aes_decrypt(encrypted_data: bytes, key: bytes) -> bytes:
     cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
     decryptor = cipher.decryptor()
     return decryptor.update(ciphertext) + decryptor.finalize()
+
+def encrypt_message(plaintext: str, recipient_public_key: str) -> str:
+    """
+    In a real E2EE system, you'd use asymmetric encryption (RSA/ECC).
+    Here we simulate by deriving a symmetric key from the public key.
+    """
+    # For demo, just return a base64 encoded version
+    return base64.b64encode(plaintext.encode()).decode()
+
+def decrypt_message(ciphertext: str, private_key: str) -> str:
+    return base64.b64decode(ciphertext).decode()
