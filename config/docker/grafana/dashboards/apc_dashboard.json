@@ -1,0 +1,25 @@
+{
+  "title": "APC Connect Dashboard",
+  "panels": [
+    {
+      "title": "Request Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(django_http_requests_total[5m])",
+          "legendFormat": "{{ method }} {{ path }}"
+        }
+      ]
+    },
+    {
+      "title": "Error Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(django_http_responses_total{status=~\"5..\"}[5m]) / rate(django_http_requests_total[5m])",
+          "legendFormat": "5xx errors"
+        }
+      ]
+    }
+  ]
+}
