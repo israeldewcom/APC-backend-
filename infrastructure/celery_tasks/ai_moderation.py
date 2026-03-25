@@ -6,7 +6,10 @@ from apps.moderation.models import ContentReport
 def moderate_content(content_type, object_id):
     if content_type == 'post':
         from apps.posts.models import Post
-        post = Post.objects.get(id=object_id)
+        try:
+            post = Post.objects.get(id=object_id)
+        except Post.DoesNotExist:
+            return
         service = ModerationService()
         result = service.check_text(post.content)
         if not result['safe']:
